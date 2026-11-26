@@ -64,6 +64,7 @@ h1{font-size:clamp(38px,5.4vw,68px);background:var(--grad);-webkit-background-cl
 .tabs{position:sticky;top:0;z-index:20;margin-top:14px;background:rgba(9,12,24,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .tabs .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}.tabs .wrap::-webkit-scrollbar{display:none}
 .tabs a{flex:none;position:relative;color:var(--mut);text-decoration:none;font-weight:600;font-size:15px;padding:18px 14px}
+.tabs .out{margin-left:auto;flex:none;align-self:center;min-height:36px;padding:0 14px;font-size:14px;color:var(--mut)}.tabs .out.sure{background:var(--pink);border-color:var(--pink);color:#fff}
 .tabs a.on{color:var(--ink)}.tabs a.on::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:3px;border-radius:3px;background:var(--grad)}
 .panel{padding:clamp(22px,3.4vw,44px) 0 80px}.panel[hidden]{display:none}
 .phead{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px}.phead p{margin:6px 0 0}
@@ -145,7 +146,7 @@ label{font-size:13px;color:var(--mut);display:block}
 </section>
 <div class="note" id="status">A carregar os teus dados…</div>
 
-<nav class="tabs"><div class="wrap"><a href="#missoes">Missões</a><a href="#dinheiro">Dinheiro</a><a href="#premios">Recompensas</a><a href="#bucket">Bucket list</a><a href="#definicoes">Definições</a></div></nav>
+<nav class="tabs"><div class="wrap"><a href="#missoes">Missões</a><a href="#dinheiro">Dinheiro</a><a href="#premios">Recompensas</a><a href="#bucket">Bucket list</a><a href="#definicoes">Definições</a><button class="out" id="sairTop" data-act="logout">Sair</button></div></nav>
 
 <section class="panel" id="missoes"><div class="wrap">
   <div class="phead"><div><h2>Missões do dia</h2><p class="mut">Feito vale 10 XP. A versão mínima vale 5 XP e salva o streak. Dia completo dá +20 XP.</p></div>
@@ -429,7 +430,7 @@ document.addEventListener('click',e=>{
   if(a==='addH'){setCfg({habitos:[...c.habitos,{id:'h'+Date.now().toString(36),nome:'Novo hábito',min:'',corpo:false}]});setTimeout(()=>{const l=document.querySelectorAll('#eh input[data-f=nome]');const x=l[l.length-1];if(x){x.focus();x.select()}},50)}
   if(a==='delH'){if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='Confirmar';setTimeout(()=>{b.classList.remove('sure');b.textContent='Apagar'},3000);return}const i=+b.dataset.i,nm=c.habitos[i]&&c.habitos[i].nome;b.blur();setCfg({habitos:c.habitos.filter((_,j)=>j!==i)});toast('Hábito apagado: '+nm)}
   if(a==='backup'){const blob=new Blob([JSON.stringify({exportado:new Date().toISOString(),...S},null,1)],{type:'application/json'});const u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download='1pct-mode-backup-'+today()+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);toast('Cópia de segurança descarregada')}
-  if(a==='logout'){sb&&sb.auth.signOut().then(()=>location.reload())}
+  if(a==='logout'){if(!b.classList.contains('sure')){b.classList.add('sure');const t=b.textContent;b.textContent='Sair? Confirmar';setTimeout(()=>{b.classList.remove('sure');b.textContent=t},3000);return}b.textContent='A sair…';try{localStorage.removeItem(LS)}catch(e){}(sb?sb.auth.signOut():Promise.resolve()).finally(()=>{location.hash='';location.reload()})}
 });
 $('#eh').addEventListener('change',e=>{const i=+e.target.dataset.i,f=e.target.dataset.f;if(isNaN(i)||!f)return;const hs=cfg().habitos.map(h=>({...h}));if(!hs[i])return;const v=e.target.value.trim().slice(0,60);if(f==='nome'&&!v){e.target.value=hs[i].nome;return}hs[i][f]=v;e.target.blur();setCfg({habitos:hs});toast('Guardado')});
 $('#eh').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='INPUT')e.target.blur()});
