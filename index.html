@@ -536,7 +536,7 @@ async function start(){
   const go=async ses=>{if(!ses){$('#auth').hidden=false;return}$('#auth').hidden=true;$('#who').textContent='Ligado como '+ses.user.email;status('A carregar…');try{await loadAll()}catch(e){status('Não foi possível carregar os dados. Verifica a internet.')}};
   const{data:{session}}=await sb.auth.getSession();go(session);
   sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='SIGNED_IN'&&$('#auth').hidden===false)go(ses);if(ev==='SIGNED_OUT')$('#auth').hidden=false});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&live&&!Object.values(Q).length)loadAll().catch(()=>{})});
+  const refresh=()=>{if(!document.hidden&&live&&!Object.keys(Q).length)loadAll().catch(()=>{})};document.addEventListener('visibilitychange',refresh);window.addEventListener('focus',refresh);window.addEventListener('pageshow',refresh);setInterval(refresh,45000);
   const msg=t=>{$('#am').textContent=t};
   $('#af').addEventListener('submit',async e=>{e.preventDefault();msg('A entrar…');const{error}=await sb.auth.signInWithPassword({email:$('#ae').value.trim(),password:$('#ap').value});if(error)msg(error.message.includes('confirm')?'Confirma primeiro o teu email.':'Email ou palavra-passe errados.')});
   $('#aUp').addEventListener('click',async()=>{const email=$('#ae').value.trim(),password=$('#ap').value;if(!email||password.length<6){msg('Escreve o email e uma palavra-passe com 6+ caracteres.');return}msg('A criar conta…');const{data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});if(error){msg(error.message);return}if(!data.session)msg('Conta criada. Confirma o email que te enviámos e depois entra aqui.')});
