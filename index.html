@@ -20,7 +20,7 @@
 *{box-sizing:border-box;min-width:0}
 html{scroll-padding-top:80px}
 body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-#auth{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:24px;background:radial-gradient(800px 500px at 20% 0%,#ff3d8b33,transparent 60%),#090c18}#auth[hidden]{display:none}#auth form{width:min(380px,100%);display:grid;gap:12px}#auth img{width:88px;height:88px;border-radius:22px;margin:0 auto 6px;display:block}#auth h1{text-align:center;font-size:44px}#auth p{margin:0;text-align:center}#auth .row{justify-content:center}
+#auth{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:24px;background:radial-gradient(800px 500px at 20% 0%,#ff3d8b33,transparent 60%),#090c18}#auth[hidden]{display:none}#auth form{width:min(380px,100%);display:grid;gap:12px}#auth img{width:88px;height:88px;border-radius:22px;margin:0 auto 6px;display:block}#auth h1{text-align:center;font-size:44px}#auth p{margin:0;text-align:center}#auth .row{justify-content:center}#auth form[hidden]{display:none}.gbtn{background:#fff;color:#1f1f1f;border:0;display:flex;gap:10px;align-items:center;justify-content:center}
 body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,#ff3d8b22,transparent 60%),radial-gradient(900px 500px at 100% 30%,#ff9a3c14,transparent 60%),var(--bg);background-attachment:fixed;color:var(--ink);font:16px/1.55 Archivo,system-ui,sans-serif;overflow-x:clip;-webkit-font-smoothing:antialiased}
 h1,h2,.big{font-family:Anton,Impact,sans-serif;font-weight:400;line-height:1.02;margin:0;letter-spacing:.2px}
 h2{font-size:clamp(28px,3.4vw,40px)}
@@ -210,12 +210,17 @@ label{font-size:13px;color:var(--mut);display:block}
       <label>Saldo atual da conta (escreve o que tens agora; os registos novos somam ou tiram a partir daqui)<input id="sSaldo" inputmode="decimal" placeholder="0"></label>
       <label>Moeda<select id="sMoeda"><option>CHF</option><option>EUR</option></select></label>
       <p class="mut">Tudo fica guardado automaticamente na tua conta.</p><div class="row"><button data-act="backup">Descarregar cópia de segurança</button><button data-act="logout">Sair</button></div><p class="mut" id="who"></p>
+      <label>Mudar palavra-passe<input id="cp" type="password" autocomplete="new-password" minlength="6" placeholder="Nova palavra-passe (6+ caracteres)"></label><button data-act="chpw">Guardar nova palavra-passe</button>
     </div>
   </div>
 </div></section>
 <div id="auth" hidden><form id="af"><img src="icon-192.png" alt=""><h1>1% Mode</h1><p class="mut">Entra para continuares a tua história.</p>
 <label>Email<input id="ae" type="email" autocomplete="email" required></label><label>Palavra-passe<input id="ap" type="password" autocomplete="current-password" minlength="6" required></label>
-<button class="pri" id="aIn">Entrar</button><button type="button" id="aUp">Criar conta</button><p class="mut" id="am"></p></form></div>
+<button class="pri" id="aIn">Entrar</button><button type="button" id="aUp">Criar conta</button>
+<button type="button" id="aG" class="gbtn"><svg viewBox="0 0 48 48" width="18" height="18"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Entrar com Google</button>
+<button type="button" id="aF" class="x" style="background:transparent;border:0">Esqueci-me da palavra-passe</button>
+<p class="mut" id="am"></p></form>
+<form id="nf" hidden><img src="icon-192.png" alt=""><h1>Nova palavra-passe</h1><label>Nova palavra-passe<input id="np" type="password" autocomplete="new-password" minlength="6" required></label><button class="pri">Guardar</button><p class="mut" id="nm"></p></form></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -430,6 +435,7 @@ document.addEventListener('click',e=>{
   if(a==='addH'){setCfg({habitos:[...c.habitos,{id:'h'+Date.now().toString(36),nome:'Novo hábito',min:'',corpo:false}]});setTimeout(()=>{const l=document.querySelectorAll('#eh input[data-f=nome]');const x=l[l.length-1];if(x){x.focus();x.select()}},50)}
   if(a==='delH'){if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='Confirmar';setTimeout(()=>{b.classList.remove('sure');b.textContent='Apagar'},3000);return}const i=+b.dataset.i,nm=c.habitos[i]&&c.habitos[i].nome;b.blur();setCfg({habitos:c.habitos.filter((_,j)=>j!==i)});toast('Hábito apagado: '+nm)}
   if(a==='backup'){const blob=new Blob([JSON.stringify({exportado:new Date().toISOString(),...S},null,1)],{type:'application/json'});const u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download='1pct-mode-backup-'+today()+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);toast('Cópia de segurança descarregada')}
+  if(a==='chpw'){const pw=$('#cp').value;if(pw.length<6){toast('Mínimo 6 caracteres');return}sb.auth.updateUser({password:pw}).then(({error})=>{toast(error?'Não foi possível: '+error.message:'Palavra-passe alterada');if(!error)$('#cp').value=''})}
   if(a==='logout'){if(!b.classList.contains('sure')){b.classList.add('sure');const t=b.textContent;b.textContent='Sair? Confirmar';setTimeout(()=>{b.classList.remove('sure');b.textContent=t},3000);return}b.textContent='A sair…';try{localStorage.removeItem(LS)}catch(e){}(sb?sb.auth.signOut():Promise.resolve()).finally(()=>{location.hash='';location.reload()})}
 });
 $('#eh').addEventListener('change',e=>{const i=+e.target.dataset.i,f=e.target.dataset.f;if(isNaN(i)||!f)return;const hs=cfg().habitos.map(h=>({...h}));if(!hs[i])return;const v=e.target.value.trim().slice(0,60);if(f==='nome'&&!v){e.target.value=hs[i].nome;return}hs[i][f]=v;e.target.blur();setCfg({habitos:hs});toast('Guardado')});
@@ -536,9 +542,13 @@ async function start(){
   db={doc:p=>({set:o=>sb.from('docs').upsert({path:p,data:o},{onConflict:'user_id,path'}).then(r=>{if(r.error)throw r.error;lsSave()})})};
   const go=async ses=>{if(!ses){$('#auth').hidden=false;return}$('#auth').hidden=true;$('#who').textContent='Ligado como '+ses.user.email;status('A carregar…');try{await loadAll()}catch(e){status('Não foi possível carregar os dados. Verifica a internet.')}};
   const{data:{session}}=await sb.auth.getSession();go(session);
-  sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='SIGNED_IN'&&$('#auth').hidden===false)go(ses);if(ev==='SIGNED_OUT')$('#auth').hidden=false});
+  sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='PASSWORD_RECOVERY'){$('#auth').hidden=false;$('#af').hidden=true;$('#nf').hidden=false;return}if(ev==='SIGNED_IN'&&$('#auth').hidden===false)go(ses);if(ev==='SIGNED_OUT')$('#auth').hidden=false});
   const refresh=()=>{if(!document.hidden&&live&&!Object.keys(Q).length)loadAll().catch(()=>{})};document.addEventListener('visibilitychange',refresh);window.addEventListener('focus',refresh);window.addEventListener('pageshow',refresh);setInterval(refresh,45000);
   const msg=t=>{$('#am').textContent=t};
+  const back=location.origin+location.pathname;
+  $('#aG').addEventListener('click',async()=>{msg('A abrir o Google…');const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:back}});if(error)msg(/provider is not enabled|Unsupported provider/i.test(error.message)?'O login com Google ainda não está ativo.':error.message)});
+  $('#aF').addEventListener('click',async()=>{const email=$('#ae').value.trim();if(!email){msg('Escreve primeiro o teu email em cima.');return}msg('A enviar…');const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:back});msg(error?error.message:'Enviámos um email com o link para criares uma nova palavra-passe.')});
+  $('#nf').addEventListener('submit',async e=>{e.preventDefault();$('#nm').textContent='A guardar…';const{error}=await sb.auth.updateUser({password:$('#np').value});if(error){$('#nm').textContent=error.message;return}$('#nf').hidden=true;$('#af').hidden=false;history.replaceState(null,'',back);location.reload()});
   $('#af').addEventListener('submit',async e=>{e.preventDefault();msg('A entrar…');const{error}=await sb.auth.signInWithPassword({email:$('#ae').value.trim(),password:$('#ap').value});if(error)msg(error.message.includes('confirm')?'Confirma primeiro o teu email.':'Email ou palavra-passe errados.')});
   $('#aUp').addEventListener('click',async()=>{const email=$('#ae').value.trim(),password=$('#ap').value;if(!email||password.length<6){msg('Escreve o email e uma palavra-passe com 6+ caracteres.');return}msg('A criar conta…');const{data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});if(error){msg(error.message);return}if(!data.session)msg('Conta criada. Confirma o email que te enviámos e depois entra aqui.')});
 }
