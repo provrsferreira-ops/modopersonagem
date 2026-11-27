@@ -145,7 +145,7 @@ details.mgd summary{cursor:pointer;color:var(--mut);font-size:14px;margin-top:10
   </div>
   <div class="hud br">
     <div class="pill"><span>Hoje</span><b id="hoje">0/0</b></div>
-    <div class="pill"><span>1% melhor</span><b id="mult">×1,00</b></div>
+    <div class="pill"><span>Semana</span><b id="mult">–</b><span id="multD"></span></div>
     <div class="pill"><span>Tempo</span><b id="wx">Limpo</b></div>
     <div class="pill"><span>Faltam</span><b id="mtHud">–</b><span>dias</span></div>
   </div>
@@ -387,7 +387,8 @@ function render(){
   $('#stk').textContent=st.stk;
   const si=st.si;$('#bestL').textContent=si.rec?'Atual maior streak':si.eq?'Igualaste o recorde':'Maior streak anterior';$('#best').textContent=si.rec?si.cur:si.prev;$('#best').classList.toggle('rec',si.rec);
   $('#stkT').textContent=(st.stk===1?'dia seguido':'dias seguidos');
-  $('#mult').textContent='×'+Math.pow(1.01,st.perfect).toFixed(2).replace('.',',');
+  {const t=today(),wk=o=>{let s=0;for(let i=o;i<o+7;i++)s+=frac(shift(t,-i));return s/7};const cur=wk(0),prv=wk(7),hasPrev=Object.keys(S.dias).some(k=>k<=shift(t,-7));
+   $('#mult').textContent=Math.round(cur*100)+'%';const d=Math.round((cur-prv)*100),md=$('#multD');md.textContent=hasPrev&&d?(d>0?'▲':'▼')+Math.abs(d):'';md.style.color=d>0?'var(--aqua)':'#ff7a7a';md.style.fontWeight='800'}
   const hs=c.habitos;const td=(S.dias[today()]&&S.dias[today()].h)||{};$('#hoje').textContent=hs.filter(h=>td[h.id]).length+'/'+hs.length;
   // hábitos
   $('#dHoje').classList.toggle('on',V.off===0);$('#dOntem').classList.toggle('on',V.off!==0);
