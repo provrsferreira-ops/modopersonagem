@@ -74,6 +74,7 @@ h1{font-size:clamp(38px,5.4vw,68px);background:var(--grad);-webkit-background-cl
 /* missões */
 .hab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;margin-bottom:10px;border-radius:18px;background:var(--glass);border:1px solid var(--line);transition:border-color .2s,background .2s}
 .hab:has(button.on){border-color:#3df2c855;background:#3df2c80d}.hab:has(button.half.on){border-color:#ff9a3c55;background:#ff9a3c0d}
+.grpT{margin:18px 2px 10px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--aqua)}.grpT:first-child{margin-top:4px}.grpT span{letter-spacing:0;text-transform:none;font-weight:500;color:var(--mut);margin-left:6px}.grpT.bon{color:#ffd166}.hab.bn{opacity:.92}.ckb{display:flex;align-items:center;gap:8px;white-space:nowrap}label.ckb input[type=checkbox]{width:20px;height:20px;min-height:0;margin:0;padding:0;accent-color:#ffd166}.ckb{min-height:46px;color:var(--ink)}#dOntem:disabled{opacity:.35;cursor:not-allowed}
 .hab b{font-size:17px;font-weight:600}.hab small{display:block;color:var(--mut);font-size:13px;margin-top:2px}
 .hs{display:inline-flex;align-items:center;gap:3px;font-size:13px;color:var(--org);font-weight:800;margin-left:8px;vertical-align:1px}
 .btns{display:flex;gap:6px}
@@ -139,7 +140,7 @@ details.mgd summary{cursor:pointer;color:var(--mut);font-size:14px;margin-top:10
 @keyframes rain{to{transform:translate(-30px,120px)}}.rain{animation:rain .6s linear infinite}@keyframes flash{0%,88%,92%,100%{opacity:0}90%{opacity:.55}91%{opacity:.1}}.flash{opacity:0;animation:flash 5s infinite}.bolt{opacity:0;animation:flash 5s infinite}@media(prefers-reduced-motion:reduce){.rain,.flash,.bolt{animation:none}}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 /* definições */
-.eh{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;padding:12px 0;border-bottom:1px solid var(--line)}
+.eh{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto;gap:10px;align-items:end;padding:12px 0;border-bottom:1px solid var(--line)}
 .del.sure,.eh .del.sure{background:var(--pink);border-color:var(--pink);color:#fff}
 .stack>*+*{margin-top:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,160%);background:#fff;color:#0a0c18;padding:12px 20px;border-radius:18px;text-align:center;width:max-content;font-weight:700;transition:transform .35s cubic-bezier(.2,.9,.3,1.2);z-index:30;max-width:90vw;box-shadow:0 12px 30px #0008}.toast.s{transform:translate(-50%,0)}
@@ -312,7 +313,9 @@ function put(path,obj){
 }
 const setCfg=p=>put('app/config',{...cfg(),...p});
 
-function frac(k){const d=S.dias[k];if(!d||!d.h)return 0;if(k>=shift(today(),-1)){const hs=cfg().habitos;if(!hs.length)return 0;return hs.filter(x=>d.h[x.id]).length/hs.length}const n=Object.values(d.h).filter(Boolean).length;const t=d.tot||cfg().habitos.length||1;return Math.min(1,n/t)}
+const core=()=>{const hs=cfg().habitos,c=hs.filter(h=>!h.bonus);return c.length?c:hs};
+const ontemAberto=()=>lisbonHour()<12;
+function frac(k){const d=S.dias[k];if(!d||!d.h)return 0;if(k>=shift(today(),-1)){const hs=core();if(!hs.length)return 0;return hs.filter(x=>d.h[x.id]).length/hs.length}if(Array.isArray(d.core)&&d.core.length)return d.core.filter(i=>d.h[i]).length/d.core.length;const n=Object.values(d.h).filter(Boolean).length;const t=d.tot||cfg().habitos.length||1;return Math.min(1,n/t)}
 const realFull=k=>frac(k)>=1;
 const jogo=()=>S.jogo||{baus:{},escudos:{},compras:[],contratos:[],semanas:{},revisoes:{}};
 const setJogo=f=>{const j=JSON.parse(JSON.stringify(jogo()));for(const k of ['baus','escudos','semanas','revisoes'])j[k]=j[k]||{};for(const k of ['compras','contratos'])j[k]=j[k]||[];f(j);put('app/jogo',j)};
@@ -444,11 +447,11 @@ function render(){
   $('#stkT').textContent=(st.stk===1?'dia seguido':'dias seguidos');
   {const t=today(),wk=o=>{let s=0;for(let i=o;i<o+7;i++)s+=frac(shift(t,-i));return s/7};const cur=wk(0),prv=wk(7),hasPrev=Object.keys(S.dias).some(k=>k<=shift(t,-7));
    $('#mult').textContent=Math.round(cur*100)+'%';const d=Math.round((cur-prv)*100),md=$('#multD');md.textContent=hasPrev&&d?(d>0?'▲':'▼')+Math.abs(d):'';md.style.color=d>0?'var(--aqua)':'#ff7a7a';md.style.fontWeight='800'}
-  const hs=c.habitos;const td=(S.dias[today()]&&S.dias[today()].h)||{};$('#hoje').textContent=hs.filter(h=>td[h.id]).length+'/'+hs.length;
+  const hs=c.habitos;const td=(S.dias[today()]&&S.dias[today()].h)||{};{const cr=core(),bn=hs.filter(h=>h.bonus&&cr.indexOf(h)<0);$('#hoje').textContent=cr.filter(h=>td[h.id]).length+'/'+cr.length+(bn.length?' +'+bn.filter(h=>td[h.id]).length:'')}
   // hábitos
-  $('#dHoje').classList.toggle('on',V.off===0);$('#dOntem').classList.toggle('on',V.off!==0);
+  if(V.off!==0&&!ontemAberto())V.off=0;$('#dOntem').disabled=!ontemAberto();$('#dOntem').title=ontemAberto()?'Corrigir ontem (até ao meio-dia)':'Ontem fechou ao meio-dia';$('#dHoje').classList.toggle('on',V.off===0);$('#dOntem').classList.toggle('on',V.off!==0);
   const dh=(S.dias[shift(today(),V.off)]&&S.dias[shift(today(),V.off)].h)||{};
-  $('#habs').innerHTML=hs.length?hs.map(h=>{const i=sInfo(htest(h.id)),n=i.cur;return `<div class="hab"><div><b>${esc(h.nome)}</b><span class="hs">${flame(n,14)}${n}</span><small>${i.rec?'<span class="rec">Atual maior streak</span>':i.eq?'Igualaste o recorde de '+i.prev:'Maior streak anterior: '+i.prev} · Mínimo: ${esc(h.min||'—')}</small></div><div class="btns"><button class="half ${dh[h.id]===1?'on':''}" data-act="mark" data-id="${esc(h.id)}" data-v="1">Mínimo</button><button class="${dh[h.id]===2?'on':''}" data-act="mark" data-id="${esc(h.id)}" data-v="2">Feito</button></div></div>`}).join(''):'<p class="mut">Ainda não tens hábitos. Adiciona em Definições.</p>';
+  const crS=new Set(core().map(x=>x.id)),hRow=h=>{const i=sInfo(htest(h.id)),n=i.cur;return `<div class="hab"><div><b>${esc(h.nome)}</b><span class="hs">${flame(n,14)}${n}</span><small>${i.rec?'<span class="rec">Atual maior streak</span>':i.eq?'Igualaste o recorde de '+i.prev:'Maior streak anterior: '+i.prev} · Mínimo: ${esc(h.min||'—')}</small></div><div class="btns"><button class="half ${dh[h.id]===1?'on':''}" data-act="mark" data-id="${esc(h.id)}" data-v="1">Mínimo</button><button class="${dh[h.id]===2?'on':''}" data-act="mark" data-id="${esc(h.id)}" data-v="2">Feito</button></div></div>`};const hN=hs.filter(h=>crS.has(h.id)),hB=hs.filter(h=>!crS.has(h.id));$('#habs').innerHTML=hs.length?(hB.length?'<p class="grpT">Núcleo <span>conta para a streak</span></p>':'')+hN.map(hRow).join('')+(hB.length?'<p class="grpT bon">Bónus <span>XP extra · não parte a streak</span></p>'+hB.map(hRow).join(''):''):'<p class="mut">Ainda não tens hábitos. Adiciona em Definições.</p>';
   // heatmap
   const t=today();let start=shift(t,-(17*7)-((parse(t).getDay()+6)%7));let cells='';
   for(let k=start;k<=t;k=shift(k,1)){const f=frac(k);cells+=`<i title="${k}" class="${k===t?'t':''}" style="${f?`background:color-mix(in srgb,var(--pink) ${Math.round(25+f*75)}%,var(--cell))`:''}"></i>`}
@@ -501,15 +504,15 @@ function render(){
   $('#scenes').innerHTML=[['palmeiras','Marginal com palmeiras',15],['cidade','Cidade à noite',30]].map(([id,n,l])=>st.L>=l?`<button class="${off.has(id)?'':'on'}" data-act="tglI" data-id="${id}">${n}</button>`:`<button disabled>${n} · nível ${l}</button>`).join('');
   if(0)$('#items').innerHTML=ITEMS.map(([id,n,l])=>{const u=st.L>=l;return `<div class="it ${u?'':'lock'}"><b>${n}</b><span class="mut">${u?'Desbloqueado':'Nível '+l}</span>${u&&(id==='palmeiras'||id==='cidade')?`<button class="${off.has(id)?'':'on'}" data-act="tglI" data-id="${id}">${off.has(id)?'Usar':'A usar'}</button>`:''}</div>`}).join('');
   // definições
-  const ae=document.activeElement;if(!(ae&&ae.tagName==='INPUT'&&ae.closest('#eh')))$('#eh').innerHTML=hs.map((h,i)=>`<div class="eh"><label>Nome<input data-i="${i}" data-f="nome" value="${esc(h.nome)}" maxlength="60"></label><label>Versão mínima<input data-i="${i}" data-f="min" value="${esc(h.min||'')}" maxlength="60" placeholder="ex.: 10 min"></label><button class="del" data-act="delH" data-i="${i}">Apagar</button></div>`).join('')||'<p class="mut">Sem hábitos.</p>';
+  const ae=document.activeElement;if(!(ae&&ae.tagName==='INPUT'&&ae.closest('#eh')))$('#eh').innerHTML=hs.map((h,i)=>`<div class="eh"><label>Nome<input data-i="${i}" data-f="nome" value="${esc(h.nome)}" maxlength="60"></label><label>Versão mínima<input data-i="${i}" data-f="min" value="${esc(h.min||'')}" maxlength="60" placeholder="ex.: 10 min"></label><label class="ckb"><input type="checkbox" data-i="${i}" data-f="bonus" ${h.bonus?'checked':''}>Bónus</label><button class="del" data-act="delH" data-i="${i}">Apagar</button></div>`).join('')||'<p class="mut">Sem hábitos.</p>';
   if(document.activeElement!==$('#sNome'))$('#sNome').value=c.nome||'';$('#sCinto').value=c.cinto||'azul';$('#sMoeda').value=c.moeda||'CHF';if(document.activeElement!==$('#sSaldo'))$('#sSaldo').value=c.saldoInicial||'';
 }
 
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id,c=cfg();
-  if(a==='dia'){V.off=b.dataset.v==='0'?0:-1;render()}
+  if(a==='dia'){if(b.dataset.v!=='0'&&!ontemAberto()){toast('Só podes corrigir ontem até ao meio-dia.');return}V.off=b.dataset.v==='0'?0:-1;render()}
   if(a==='mark'||a==='cAdd'||a==='tglE'||a==='tglB'){const r=b.getBoundingClientRect();render.fxAt={x:r.left+r.width/2,y:r.top}}
-  if(a==='mark'){const k=shift(today(),V.off),v=+b.dataset.v,o=S.dias[k]||{h:{}},h={...(o.h||{})};const un=h[id]===v;if(un)delete h[id];else h[id]=v;const was=full(k);put('dias/'+k,{h,tot:c.habitos.length});if(!was&&realFull(k)){toast('Dia completo! Abre o baú.');SND.play('day');confetti(140)}else SND.play(un?'undo':v===2?'done':'min')}
+  if(a==='mark'){if(V.off!==0&&!ontemAberto()){V.off=0;render();toast('O dia de ontem fechou ao meio-dia.');return}const k=shift(today(),V.off),v=+b.dataset.v,o=S.dias[k]||{h:{}},h={...(o.h||{})};const un=h[id]===v;if(un)delete h[id];else h[id]=v;const was=full(k);const cr=core();put('dias/'+k,{h,tot:cr.length,core:cr.map(x=>x.id)});if(!was&&realFull(k)){toast('Dia completo! Abre o baú.');SND.play('day');confetti(140)}else SND.play(un?'undo':v===2?'done':'min')}
   if(a==='mes'){const d=parse(V.mes+'-01');d.setMonth(d.getMonth()+ +b.dataset.v);V.mes=key(d).slice(0,7);render()}
   if(a==='tipo'){V.tipo=b.dataset.v;render()}
   if(a==='delF'){if(!b.classList.contains('sure')){b.classList.add('sure','del');b.textContent='Apagar?';setTimeout(()=>{b.classList.remove('sure');b.textContent='✕'},3000);return}const m=V.mes,it=((S.fin[m]&&S.fin[m].items)||[]).filter(x=>x.id!==id);put('fin/'+m,{items:it});toast('Registo apagado')}
@@ -536,7 +539,7 @@ document.addEventListener('click',e=>{
   if(a==='chpw'){const pw=$('#cp').value;if(pw.length<6){toast('Mínimo 6 caracteres');return}sb.auth.updateUser({password:pw}).then(({error})=>{toast(error?'Não foi possível: '+error.message:'Palavra-passe alterada');if(!error)$('#cp').value=''})}
   if(a==='logout'){if(!b.classList.contains('sure')){b.classList.add('sure');const t=b.textContent;b.textContent='Sair? Confirmar';setTimeout(()=>{b.classList.remove('sure');b.textContent=t},3000);return}b.textContent='A sair…';try{localStorage.removeItem(LS)}catch(e){}(sb?sb.auth.signOut():Promise.resolve()).finally(()=>{location.hash='';location.reload()})}
 });
-$('#eh').addEventListener('change',e=>{const i=+e.target.dataset.i,f=e.target.dataset.f;if(isNaN(i)||!f)return;const hs=cfg().habitos.map(h=>({...h}));if(!hs[i])return;const v=e.target.value.trim().slice(0,60);if(f==='nome'&&!v){e.target.value=hs[i].nome;return}hs[i][f]=v;e.target.blur();setCfg({habitos:hs});toast('Guardado')});
+$('#eh').addEventListener('change',e=>{const i=+e.target.dataset.i,f=e.target.dataset.f;if(isNaN(i)||!f)return;const hs=cfg().habitos.map(h=>({...h}));if(!hs[i])return;if(f==='bonus'){hs[i].bonus=e.target.checked;if(!hs.some(h=>!h.bonus)){e.target.checked=false;toast('Precisas de pelo menos 1 missão no núcleo.');return}setCfg({habitos:hs});toast(e.target.checked?'Passou a bónus':'Passou ao núcleo');return}const v=e.target.value.trim().slice(0,60);if(f==='nome'&&!v){e.target.value=hs[i].nome;return}hs[i][f]=v;e.target.blur();setCfg({habitos:hs});toast('Guardado')});
 $('#eh').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='INPUT')e.target.blur()});
 $('#sNome').addEventListener('change',e=>setCfg({nome:e.target.value.trim().slice(0,30)}));
 $('#sCinto').addEventListener('change',e=>setCfg({cinto:e.target.value}));
