@@ -286,13 +286,14 @@ function cur(test){let k=today(),c=0;if(!test(k))k=shift(k,-1);while(test(k)){c+
 function best(test){const ks=Object.keys(S.dias).filter(test).sort();let b=0,c=0,p=null;for(const k of ks){c=(p&&shift(p,1)===k)?c+1:1;if(c>b)b=c;p=k}return b}
 function sInfo(test){const ks=Object.keys(S.dias).filter(test).sort(),runs=[];let c=0,p=null;for(const k of ks){if(p&&shift(p,1)===k)c++;else{if(p)runs.push({end:p,n:c});c=1}p=k}if(p)runs.push({end:p,n:c});const t=today(),y=shift(t,-1),cr=runs.find(r=>r.end===t||r.end===y),cur=cr?cr.n:0,prev=Math.max(0,...runs.filter(r=>r!==cr).map(r=>r.n));return{cur,prev,rec:cur>0&&cur>prev,eq:cur>0&&cur===prev}}
 const htest=id=>k=>S.dias[k]&&S.dias[k].h&&S.dias[k].h[id];
+const LMAX=99,lvXP=L=>Math.round(80*(Math.pow(1.05,L-1)-1)/0.05);
 function stats(){
   let xp=0,perfect=0,corpo=0;const ch=cfg().habitos.filter(h=>h.corpo).map(h=>h.id);
   for(const k in S.dias){const h=(S.dias[k]&&S.dias[k].h)||{};for(const v of Object.values(h))xp+=v===2?10:v===1?5:0;if(full(k)){xp+=20;perfect++}if(ch.some(i=>h[i]))corpo++}
   xp+=bucket().filter(b=>b.feito).length*100;
   if(S.metas&&S.metas.metas)for(const g of S.metas.metas)xp+=g.etapas.filter(e=>e.feito).length*50;
-  const L=Math.floor(Math.sqrt(xp/50))+1;
-  const si=sInfo(full);return{xp,L,lo:50*(L-1)**2,hi:50*L**2,perfect,corpo,stk:si.cur,si};
+  let L=1;while(L<LMAX&&xp>=lvXP(L+1))L++;
+  const si=sInfo(full);return{xp,L,lo:lvXP(L),hi:L<LMAX?lvXP(L+1):lvXP(L),perfect,corpo,stk:si.cur,si};
 }
 
 function flame(n,w){const c=n>=30?['#5cc8ff','#e6f8ff']:n>=7?['#ff3b3b','#ffd84d']:n>0?['#ff7a1a','#ffe08a']:['#6b6b78','#a9a9b6'];
@@ -365,7 +366,7 @@ function charSVG(st,on,c){
 
 function render(){
   const c=cfg(),st=stats(),off=new Set(c.off||[]);
-  const unlocked=id=>id==='palmeiras'?st.L>=5:id==='cidade'?st.L>=10:false;
+  const unlocked=id=>id==='palmeiras'?st.L>=15:id==='cidade'?st.L>=30:false;
   const on=id=>unlocked(id)&&!off.has(id);
   if(live&&lastL&&st.L>lastL){toast('Subiste para o nível '+st.L+'!');setTimeout(()=>SND.play('level'),350)}
   lastL=st.L;
@@ -379,7 +380,7 @@ function render(){
   const cs=$('#cash');cs.textContent=(tot<0?'-':'')+c.moeda+' '+new Intl.NumberFormat('de-CH',{maximumFractionDigits:0}).format(Math.abs(Math.round(tot)));cs.classList.toggle('neg',tot<0);
   $('#cashD').textContent=dl?(dl>0?'+':'-')+Math.abs(Math.round(dl))+' hoje':'';
   $('#nome').textContent=c.nome||'A tua personagem';
-  $('#lvl').textContent='Nv '+st.L;$('#xpt').textContent=st.xp+' XP · faltam '+(st.hi-st.xp)+' para o '+(st.L+1);
+  $('#lvl').textContent='Nv '+st.L;{const pc=st.L>=LMAX?100:Math.max(0,(st.xp-st.lo)/(st.hi-st.lo)*100);$('#xpt').textContent=st.L>=LMAX?'Nível máximo. Estás no top 1%.':pc.toFixed(2).replace('.',',')+'% · faltam '+(st.hi-st.xp).toLocaleString('pt-PT')+' XP para o Nv '+(st.L+1)}
   $('#xpb').style.width=((st.xp-st.lo)/(st.hi-st.lo)*100).toFixed(1)+'%';
   
   $('#flame').innerHTML=flame(st.stk,40+Math.min(40,st.stk*1.5));
@@ -438,7 +439,7 @@ function render(){
   $('#items').innerHTML=ps.map(r=>`<div class="it ${r.resgatado?'done':r.got?'got':''}"><b>${esc(r.txt)}</b><span class="cond">${esc(rl(r,r.alvo))}${r.tipo==='saldo'?' na conta':r.tipo==='streak'?' seguidos':''}</span><div class="bar"><i style="width:${(r.got?1:r.pct)*100}%"></i></div><span class="mut">${r.resgatado?'Resgatado a '+esc(r.resgatado):r.got?'Desbloqueado!':(r.tipo==='saldo'?esc(c.moeda+' '+shortN(Math.round(r.v))+' de '+shortN(r.alvo)):r.tipo==='nivel'?'Nível '+r.v+' de '+r.alvo:r.v+' de '+r.alvo+' dias')+' · '+Math.floor(r.pct*100)+'%'}</span><div class="row">${r.got&&!r.resgatado?`<button class="pri" data-act="claimR" data-id="${esc(r.id)}">Resgatar</button>`:''}<button class="x del" data-act="delR" data-id="${esc(r.id)}">Apagar</button></div></div>`).join('')||'<p class="mut">Ainda sem recompensas. Adiciona a primeira acima.</p>';
   const nr=ps.filter(r=>!r.got).sort((x,y)=>y.pct-x.pct)[0];$('#nextU').textContent=nr?'Próxima recompensa: '+nr.txt+' ('+Math.floor(nr.pct*100)+'%)':'';
   {const now=new Set(ps.filter(r=>r.got&&!r.resgatado).map(r=>r.id));if(live&&render.gs){const nw=ps.filter(r=>now.has(r.id)&&!render.gs.has(r.id));if(nw.length){toast('Recompensa desbloqueada: '+nw.map(r=>r.txt).join(', '));setTimeout(()=>SND.play('reward'),500)}}if(live)render.gs=now}
-  $('#scenes').innerHTML=[['palmeiras','Marginal com palmeiras',5],['cidade','Cidade à noite',10]].map(([id,n,l])=>st.L>=l?`<button class="${off.has(id)?'':'on'}" data-act="tglI" data-id="${id}">${n}</button>`:`<button disabled>${n} · nível ${l}</button>`).join('');
+  $('#scenes').innerHTML=[['palmeiras','Marginal com palmeiras',15],['cidade','Cidade à noite',30]].map(([id,n,l])=>st.L>=l?`<button class="${off.has(id)?'':'on'}" data-act="tglI" data-id="${id}">${n}</button>`:`<button disabled>${n} · nível ${l}</button>`).join('');
   if(0)$('#items').innerHTML=ITEMS.map(([id,n,l])=>{const u=st.L>=l;return `<div class="it ${u?'':'lock'}"><b>${n}</b><span class="mut">${u?'Desbloqueado':'Nível '+l}</span>${u&&(id==='palmeiras'||id==='cidade')?`<button class="${off.has(id)?'':'on'}" data-act="tglI" data-id="${id}">${off.has(id)?'Usar':'A usar'}</button>`:''}</div>`}).join('');
   // definições
   const ae=document.activeElement;if(!(ae&&ae.tagName==='INPUT'&&ae.closest('#eh')))$('#eh').innerHTML=hs.map((h,i)=>`<div class="eh"><label>Nome<input data-i="${i}" data-f="nome" value="${esc(h.nome)}" maxlength="60"></label><label>Versão mínima<input data-i="${i}" data-f="min" value="${esc(h.min||'')}" maxlength="60" placeholder="ex.: 10 min"></label><button class="del" data-act="delH" data-i="${i}">Apagar</button></div>`).join('')||'<p class="mut">Sem hábitos.</p>';
